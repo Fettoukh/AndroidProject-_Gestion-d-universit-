@@ -27,6 +27,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -36,11 +37,12 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
-public class RecordListActivity extends AppCompatActivity {
+public class RecordListActivity extends AppCompatActivity implements SearchView.OnQueryTextListener{
 
     ListView mListView;
     ArrayList<Model> mList;
     RecordListAdapter mAdapter = null ;
+    private SearchView sv;
 
     ImageView imageViewIcon;
 
@@ -52,74 +54,53 @@ public class RecordListActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Liste des universités ");
 
-        mListView = findViewById(R.id.listView);
 
+        mListView = findViewById(R.id.listView);
+        sv = (SearchView) findViewById(R.id.search_view);
         mList = new ArrayList<>();
         mAdapter = new RecordListAdapter(this , R.layout.row , mList);
         mListView.setAdapter(mAdapter);
+        sv.setOnQueryTextListener(this);
 
         //getAll Datafrom Sqlite
+        ShowAll();
 
-        Cursor cursor = MainActivity.mSQLiteHelper.getData("SELECT * FROM RECORD");
-        mList.clear();
-        while(cursor.moveToNext())
-        {
-            int id = cursor.getInt(0);
-            String name = cursor.getString(1);
-            String adresse = cursor.getString(2);
-            String phone = cursor.getString(3);
-            String formation = cursor.getString(4);
-            String specialite = cursor.getString(5);
-            byte[] image = cursor.getBlob(6);
-
-            mList.add(new Model(id , name , adresse , phone ,formation, specialite, image));
-        }
-        mAdapter.notifyDataSetChanged();
+        //No data in SQLITE
         if(mList.size()==0)
         {
             Toast.makeText(this , "Aucune université trouvée" , Toast.LENGTH_SHORT ).show();
         }
 
-       mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-           @Override
-           public boolean onItemLongClick(AdapterView<?> adapterView, View view, final   int position, long l) {
-               final CharSequence[] items = {"Modifier" , "Supprimer"};
-               AlertDialog.Builder dialog = new AlertDialog.Builder(RecordListActivity.this);
 
-               dialog.setTitle("Choisir une action");
-               dialog.setItems(items, new DialogInterface.OnClickListener() {
-                   @Override
-                   public void onClick(DialogInterface dialogInterface, int i) {
-                       if(i==0)
-                       {
+        //Long Click to update or Delete
+        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, final   int position, long l) {
+                final CharSequence[] items = {"Modifier" , "Supprimer"};
+                AlertDialog.Builder dialog = new AlertDialog.Builder(RecordListActivity.this);
 
-                           //update
-                           Cursor c = MainActivity.mSQLiteHelper.getData("SELECT id FROM RECORD");
-                           ArrayList<Integer> arrID = new ArrayList<Integer>();
-                           while(c.moveToNext())
-                           {
-                               arrID.add(c.getInt(0));
-                           }
-                           //show update dialog
-                           showDialogUpdate(RecordListActivity.this , arrID.get(position));
-                       }if(i==1)
-                       {
-                           //delete
-                           Cursor c = MainActivity.mSQLiteHelper.getData("SELECT id FROM RECORD");
-                           ArrayList<Integer> arrID = new ArrayList<Integer>();
-                           while(c.moveToNext())
-                           {
-                               arrID.add(c.getInt(0));
-                           }
-                           showDialogDelete(arrID.get(position));
-                       }
-                   }
-               });
-               dialog.show();
-               return true;
-           }
-       });
+                dialog.setTitle("Choisir une action");
+                dialog.setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        if(i==0)
+                        {
 
+                            //update
+                            ArrayList<Integer> arrID = getAllID();
+                            showDialogUpdate(RecordListActivity.this , arrID.get(position));
+                        }if(i==1)
+                        {
+                            //delete
+                            ArrayList<Integer> arrID = getAllID();
+                            showDialogDelete(arrID.get(position));
+                        }
+                    }
+                });
+                dialog.show();
+                return true;
+            }
+        });
 
     }
 
@@ -137,7 +118,7 @@ public class RecordListActivity extends AppCompatActivity {
                 }
                 catch(Exception e)
                 {
-                  Log.e("error" , e.getMessage());
+                    Log.e("error" , e.getMessage());
                 }
                 updateRecordList();
             }
@@ -174,10 +155,10 @@ public class RecordListActivity extends AppCompatActivity {
         edtSpecialite.setAdapter(adapter2);
 
         Button btnUpdate = dialog.findViewById(R.id.btnUpdate);
+        Button btnCancel = dialog.findViewById(R.id.btnCancel);
 
-        //get all data from SQLITE
+        //get 1 data from SQLITE
         Cursor cursor = MainActivity.mSQLiteHelper.getData("SELECT * FROM RECORD WHERE id = " + position);
-        mList.clear();
         while(cursor.moveToNext())
         {
             int id = cursor.getInt(0);
@@ -195,14 +176,12 @@ public class RecordListActivity extends AppCompatActivity {
             edtSpecialite.setSelection(pos);
             byte[] image = cursor.getBlob(6);
             imageViewIcon.setImageBitmap(BitmapFactory.decodeByteArray(image , 0 , image.length ));
-
-            mList.add(new Model(id , name , adresse , phone ,formation , specialite, image));
         }
 
         // set width of dialog
         int width = (int) (activity.getResources().getDisplayMetrics().widthPixels*0.95);
         //set height of dialog
-        int height = (int) (activity.getResources().getDisplayMetrics().heightPixels*0.7);
+        int height = (int) (activity.getResources().getDisplayMetrics().heightPixels*0.8);
         dialog.getWindow().setLayout(width,height);
         dialog.show();
 
@@ -224,12 +203,12 @@ public class RecordListActivity extends AppCompatActivity {
             public void onClick(View view) {
                 try{
                     MainActivity.mSQLiteHelper.updateData(edtName.getText().toString().trim(),
-                                                            edtAdresse.getText().toString().trim(),
-                                                            edtPhone.getText().toString().trim(),
-                                                            edtFormation.getSelectedItem().toString(),
-                                                            edtSpecialite.getSelectedItem().toString(),
-                                                            MainActivity.imageViewToByte(imageViewIcon),
-                                                            position);
+                            edtAdresse.getText().toString().trim(),
+                            edtPhone.getText().toString().trim(),
+                            edtFormation.getSelectedItem().toString(),
+                            edtSpecialite.getSelectedItem().toString(),
+                            MainActivity.imageViewToByte(imageViewIcon),
+                            position);
                     dialog.dismiss();
                     Toast.makeText(getApplicationContext() , "Modification effectuée" , Toast.LENGTH_SHORT).show();
                 }
@@ -238,6 +217,15 @@ public class RecordListActivity extends AppCompatActivity {
                     Log.e("Update Error" , error.getMessage());
                 }
                 updateRecordList();
+
+            }
+        });
+
+        btnCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ShowAll();
+                dialog.dismiss();
             }
         });
     }
@@ -245,20 +233,7 @@ public class RecordListActivity extends AppCompatActivity {
     private void updateRecordList()
     {
         // get all data from SQLITE
-        Cursor cursor = MainActivity.mSQLiteHelper.getData("SELECT * FROM RECORD");
-        mList.clear();
-        while(cursor.moveToNext())
-        {
-            int id = cursor.getInt(0);
-            String name = cursor.getString(1);
-            String adresse = cursor.getString(2);
-            String phone = cursor.getString(3);
-            String formation = cursor.getString(4);
-            String specialite = cursor.getString(5);
-            byte[] image = cursor.getBlob(6);
-
-            mList.add(new Model(id , name , adresse , phone,formation,specialite , image));
-        }
+        ShowAll();
         mAdapter.notifyDataSetChanged();
     }
 
@@ -314,4 +289,46 @@ public class RecordListActivity extends AppCompatActivity {
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        mAdapter.getFilter().filter(newText);
+        return false;
+    }
+
+
+    public void ShowAll()
+    {
+        Cursor cursor = MainActivity.mSQLiteHelper.getData("SELECT * FROM RECORD");
+        mList.clear();
+        while(cursor.moveToNext()) {
+            int id = cursor.getInt(0);
+            String name = cursor.getString(1);
+            String adresse = cursor.getString(2);
+            String phone = cursor.getString(3);
+            String formation = cursor.getString(4);
+            String specialite = cursor.getString(5);
+            byte[] image = cursor.getBlob(6);
+
+            mList.add(new Model(id, name, adresse, phone, formation, specialite, image));
+        }
+    }
+
+    public ArrayList<Integer> getAllID()
+    {
+        Cursor c = MainActivity.mSQLiteHelper.getData("SELECT id FROM RECORD");
+        ArrayList<Integer> arrID = new ArrayList<Integer>();
+        while(c.moveToNext())
+        {
+            arrID.add(c.getInt(0));
+        }
+        return arrID;
+    }
+
+
 }

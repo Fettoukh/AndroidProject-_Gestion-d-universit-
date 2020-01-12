@@ -7,25 +7,74 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class RecordListAdapter extends BaseAdapter {
+public class RecordListAdapter extends BaseAdapter implements Filterable {
 
 
     private Context context ;
     private int layout;
     private ArrayList<Model> recordList;
+    ValueFilter valueFilter;
+    List<Model> mStringFilterList;
 
     public RecordListAdapter(Context context, int layout, ArrayList<Model> recordList) {
         this.context = context;
         this.layout = layout;
         this.recordList = recordList;
+        mStringFilterList = recordList;
     }
 
-    @Override
+    private class ValueFilter extends Filter {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            FilterResults results = new FilterResults();
+
+            if (constraint != null && constraint.length() > 0) {
+                ArrayList<Model> filterList = new ArrayList<Model>();
+                for (int i = 0; i < mStringFilterList.size(); i++) {
+                    if ((mStringFilterList.get(i).getName().toUpperCase())
+                            .contains(constraint.toString().toUpperCase())) {
+
+                        Model bean = new Model(mStringFilterList.get(i)
+                                .getId(), mStringFilterList.get(i)
+                                .getName(),mStringFilterList.get(i)
+                                .getAdresse(),mStringFilterList.get(i)
+                                .getPhone(),mStringFilterList.get(i)
+                                .getFormation(),mStringFilterList.get(i)
+                                .getSpecialite(),mStringFilterList.get(i)
+                                .getImage());
+
+
+                        filterList.add(bean);
+                    }
+                }
+                results.count = filterList.size();
+                results.values = filterList;
+            } else {
+                results.count = mStringFilterList.size();
+                results.values = mStringFilterList;
+            }
+            return results;
+
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            recordList = (ArrayList<Model>) results.values;
+            notifyDataSetChanged();
+        }
+    }
+
+
+
+        @Override
     public int getCount() {
         return recordList.size();
     }
@@ -39,6 +88,16 @@ public class RecordListAdapter extends BaseAdapter {
     public long getItemId(int i) {
         return i;
     }
+
+    @Override
+    public Filter getFilter() {
+        if (valueFilter == null) {
+            valueFilter = new ValueFilter();
+        }
+        return valueFilter;
+    }
+
+
 
     private class ViewHolder{
         ImageView imageView;
