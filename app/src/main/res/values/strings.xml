@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TP</string>
+    <string name="nom">Nom</string>
+    <string name="adresse">Adresse</string>
+    <string name="tel">Telephone</string>
+    <string name="btn_add">Ajouter</string>
+    <string name="btn_list">Lister</string>
+    <string name="formation">Formation</string>
+    <string name="specialite">Specialite</string>
+</resources>
