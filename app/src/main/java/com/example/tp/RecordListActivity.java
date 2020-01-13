@@ -107,9 +107,9 @@ public class RecordListActivity extends AppCompatActivity implements SearchView.
     private void showDialogDelete(final Integer idRecord)
     {
         AlertDialog.Builder dialogDelete = new AlertDialog.Builder(RecordListActivity.this);
-        dialogDelete.setTitle("Attention !!");
+        dialogDelete.setTitle("Supression !!");
         dialogDelete.setMessage("Etes vous sûre ?");
-        dialogDelete.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        dialogDelete.setPositiveButton("Oui", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 try{
@@ -123,7 +123,7 @@ public class RecordListActivity extends AppCompatActivity implements SearchView.
                 updateRecordList();
             }
         });
-        dialogDelete.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        dialogDelete.setNegativeButton("Non", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
@@ -137,7 +137,7 @@ public class RecordListActivity extends AppCompatActivity implements SearchView.
 
         final Dialog dialog = new Dialog(activity);
         dialog.setContentView(R.layout.update_dialog);
-        dialog.setTitle("Modifier");
+        dialog.setTitle("Modification");
 
         imageViewIcon = dialog.findViewById(R.id.imageViewRecord);
         final EditText edtName = dialog.findViewById(R.id.edtName);

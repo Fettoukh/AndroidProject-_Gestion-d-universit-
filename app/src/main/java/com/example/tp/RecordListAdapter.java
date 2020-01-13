@@ -39,8 +39,7 @@ public class RecordListAdapter extends BaseAdapter implements Filterable {
             if (constraint != null && constraint.length() > 0) {
                 ArrayList<Model> filterList = new ArrayList<Model>();
                 for (int i = 0; i < mStringFilterList.size(); i++) {
-                    if ((mStringFilterList.get(i).getName().toUpperCase())
-                            .contains(constraint.toString().toUpperCase())) {
+                    if ((mStringFilterList.get(i).getName().toUpperCase()).startsWith(constraint.toString().toUpperCase())) {
 
                         Model bean = new Model(mStringFilterList.get(i)
                                 .getId(), mStringFilterList.get(i)

@@ -112,7 +112,9 @@ public class MainActivity extends AppCompatActivity {
                     mEdtName.setText("");
                     mEdtAdresse.setText("");
                     mEdtPhone.setText("");
-                    mImageView.setImageResource(R.drawable.addphoto);
+                    etSpecialite.setSelection(0);
+                    etFormation.setSelection(0);
+                    mImageView.setImageResource(R.drawable.photo4);
 
                 }
                 catch (Exception e)
